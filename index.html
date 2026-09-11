@@ -74,7 +74,7 @@
   <h2>Pendientes</h2>
   <ul id="pendientes"></ul>
 
-  <h2>Entregados</h2>
+  <h2>Recogidos</h2>
   <ul id="entregados"></ul>
 </main>
 
@@ -127,23 +127,23 @@ function render(){
   const done = items.filter(i => i.entregado).sort((a,b) => b.entregado - a.entregado);
   const uds = pend.reduce((n,i) => n + i.unidades, 0);
   resumen.textContent = pend.length
-    ? `${pend.length} cliente${pend.length>1?'s':''} · ${uds} router${uds>1?'s':''} por entregar`
-    : 'Todo entregado';
+    ? `${pend.length} cliente${pend.length>1?'s':''} · ${uds} router${uds>1?'s':''} por recoger`
+    : 'Todo recogido';
 
   pendientes.innerHTML = pend.length ? pend.map(i => `
     <li data-id="${i.id}">
       <span class="name">${esc(i.nombre)}</span>
       <span class="units"><b>${i.unidades}</b> uds.</span>
-      <button class="ok" data-act="entregar">Entregado</button>
+      <button class="ok" data-act="entregar">Recogido</button>
     </li>`).join('') : '<li class="empty">No hay routers pendientes</li>';
 
   entregados.innerHTML = done.length ? done.map(i => `
     <li class="done" data-id="${i.id}">
-      <span class="name">${esc(i.nombre)}<span class="date">Entregado el ${fmt(i.entregado)}</span></span>
+      <span class="name">${esc(i.nombre)}<span class="date">Recogido el ${fmt(i.entregado)}</span></span>
       <span class="units"><b>${i.unidades}</b> uds.</span>
       <button class="ghost" data-act="deshacer" title="Volver a pendientes">Deshacer</button>
       <button class="ghost" data-act="borrar" title="Eliminar">✕</button>
-    </li>`).join('') : '<li class="empty">Aún no has entregado ninguno</li>';
+    </li>`).join('') : '<li class="empty">Aún no has recogido ninguno</li>';
 }
 
 alta.addEventListener('submit', e => {

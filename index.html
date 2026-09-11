@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Routers pendientes</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='6' y='34' width='52' height='20' rx='5' fill='%231d3557'/%3E%3Crect x='16' y='10' width='4' height='24' rx='2' fill='%231d3557'/%3E%3Crect x='44' y='10' width='4' height='24' rx='2' fill='%231d3557'/%3E%3Ccircle cx='18' cy='44' r='3' fill='%2352d273'/%3E%3Ccircle cx='28' cy='44' r='3' fill='%2352d273'/%3E%3Ccircle cx='38' cy='44' r='3' fill='%23a8dadc'/%3E%3Ccircle cx='48' cy='44' r='3' fill='%23a8dadc'/%3E%3C/svg%3E">
+<style>
+  :root{
+    --bg:#f3f6f8; --paper:#ffffff; --ink:#1d3557; --muted:#6b7a8c;
+    --line:#d9e1e8; --ok:#1f9d55; --ok-soft:#e6f6ec; --danger:#c0392b;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 "Segoe UI",system-ui,-apple-system,sans-serif}
+  main{max-width:640px;margin:0 auto;padding:24px 16px 60px}
+  h1{display:flex;align-items:center;gap:12px;font-size:1.7rem;margin:0 0 4px}
+  h1 svg{width:36px;height:36px;flex:none}
+  .sub{color:var(--muted);margin:0 0 22px}
+  form{display:grid;grid-template-columns:1fr 92px auto;gap:8px;background:var(--paper);padding:12px;border:1px solid var(--line);border-radius:12px}
+  input{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:8px;min-width:0;width:100%}
+  input:focus,button:focus-visible{outline:3px solid #a8dadc;outline-offset:1px}
+  button{font:inherit;font-weight:600;padding:10px 14px;border:0;border-radius:8px;cursor:pointer;background:var(--ink);color:#fff}
+  button.ok{background:var(--ok)}
+  button.ghost{background:transparent;color:var(--muted);padding:6px 8px;font-weight:500}
+  button.ghost:hover{color:var(--danger)}
+  h2{font-size:.95rem;color:var(--muted);font-weight:600;margin:28px 0 8px}
+  ul{list-style:none;margin:0;padding:0}
+  li{display:flex;align-items:center;gap:12px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:8px}
+  .name{flex:1;font-weight:600}
+  .units{font-variant-numeric:tabular-nums;white-space:nowrap}
+  .units b{font-size:1.2rem}
+  li.done{background:var(--ok-soft);border-color:#bfe6cc}
+  li.done .name,li.done .units{text-decoration:line-through;color:var(--muted);font-weight:500}
+  .date{display:block;font-size:.8rem;color:var(--ok);text-decoration:none!important;font-weight:600}
+  li.empty{justify-content:center;color:var(--muted);padding:28px 20px;background:transparent;border-style:dashed}
+  #bloqueo{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:16px;z-index:10}
+  #bloqueo form{grid-template-columns:1fr auto;width:100%;max-width:360px}
+  #bloqueo p{grid-column:1/-1;margin:0 0 4px;font-weight:600}
+  #bloqueo .err{grid-column:1/-1;margin:0;color:var(--danger);font-size:.9rem;min-height:1.2em}
+  body.abierto #bloqueo{display:none}
+  @media (max-width:480px){
+    form{grid-template-columns:1fr 80px}
+    form button{grid-column:1/-1}
+  }
+</style>
+</head>
+<body>
+<div id="bloqueo">
+  <form id="login" autocomplete="off">
+    <p>Routers pendientes</p>
+    <input id="clave" type="password" placeholder="Contraseña" required autofocus>
+    <button type="submit">Entrar</button>
+    <p class="err" id="err"></p>
+  </form>
+</div>
+<main>
+  <h1>
+    <svg viewBox="0 0 64 64" aria-hidden="true"><rect x="6" y="34" width="52" height="20" rx="5" fill="#1d3557"/><rect x="16" y="10" width="4" height="24" rx="2" fill="#1d3557"/><rect x="44" y="10" width="4" height="24" rx="2" fill="#1d3557"/><circle cx="18" cy="44" r="3" fill="#52d273"/><circle cx="28" cy="44" r="3" fill="#52d273"/><circle cx="38" cy="44" r="3" fill="#a8dadc"/><circle cx="48" cy="44" r="3" fill="#a8dadc"/></svg>
+    Routers pendientes
+  </h1>
+  <p class="sub" id="resumen"></p>
+
+  <form id="alta" autocomplete="off">
+    <input id="nombre" placeholder="Nombre del cliente" required>
+    <input id="unidades" type="number" min="1" value="1" placeholder="Uds." required>
+    <button type="submit">Añadir</button>
+  </form>
+
+  <h2>Pendientes</h2>
+  <ul id="pendientes"></ul>
+
+  <h2>Entregados</h2>
+  <ul id="entregados"></ul>
+</main>
+
+<script>
+const HASH = '22471fea1bbfa99dd56c5996dad22bccc3b83b89a92a274d235a00ef1ecfdd4a';
+async function sha256(s){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2,'0')).join('');
+}
+if (localStorage.getItem('routers-auth') === HASH) document.body.classList.add('abierto');
+login.addEventListener('submit', async e => {
+  e.preventDefault();
+  if (await sha256(clave.value) === HASH) {
+    localStorage.setItem('routers-auth', HASH);
+    document.body.classList.add('abierto');
+  } else {
+    err.textContent = 'Contraseña incorrecta';
+    clave.value = ''; clave.focus();
+  }
+});
+
+const KEY = 'routers-pendientes';
+let items = JSON.parse(localStorage.getItem(KEY) || '[]');
+const save = () => localStorage.setItem(KEY, JSON.stringify(items));
+
+const fmt = ts => new Date(ts).toLocaleString('es-ES', {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'});
+const esc = s => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function render(){
+  const pend = items.filter(i => !i.entregado);
+  const done = items.filter(i => i.entregado).sort((a,b) => b.entregado - a.entregado);
+  const uds = pend.reduce((n,i) => n + i.unidades, 0);
+  resumen.textContent = pend.length
+    ? `${pend.length} cliente${pend.length>1?'s':''} · ${uds} router${uds>1?'s':''} por entregar`
+    : 'Todo entregado';
+
+  pendientes.innerHTML = pend.length ? pend.map(i => `
+    <li data-id="${i.id}">
+      <span class="name">${esc(i.nombre)}</span>
+      <span class="units"><b>${i.unidades}</b> uds.</span>
+      <button class="ok" data-act="entregar">Entregado</button>
+    </li>`).join('') : '<li class="empty">No hay routers pendientes</li>';
+
+  entregados.innerHTML = done.length ? done.map(i => `
+    <li class="done" data-id="${i.id}">
+      <span class="name">${esc(i.nombre)}<span class="date">Entregado el ${fmt(i.entregado)}</span></span>
+      <span class="units"><b>${i.unidades}</b> uds.</span>
+      <button class="ghost" data-act="deshacer" title="Volver a pendientes">Deshacer</button>
+      <button class="ghost" data-act="borrar" title="Eliminar">✕</button>
+    </li>`).join('') : '<li class="empty">Aún no has entregado ninguno</li>';
+}
+
+alta.addEventListener('submit', e => {
+  e.preventDefault();
+  items.push({ id: Date.now(), nombre: nombre.value.trim(), unidades: +unidades.value, entregado: null });
+  save(); render();
+  alta.reset(); unidades.value = 1; nombre.focus();
+});
+
+document.addEventListener('click', e => {
+  const btn = e.target.closest('button[data-act]');
+  if (!btn) return;
+  const id = +btn.closest('li').dataset.id;
+  const it = items.find(i => i.id === id);
+  if (btn.dataset.act === 'entregar') it.entregado = Date.now();
+  if (btn.dataset.act === 'deshacer') it.entregado = null;
+  if (btn.dataset.act === 'borrar' && confirm(`¿Eliminar a ${it.nombre}?`)) items = items.filter(i => i.id !== id);
+  save(); render();
+});
+
+render();
+</script>
+</body>
+</html>

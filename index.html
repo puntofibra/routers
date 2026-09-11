@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Routers pendientes</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1d3557">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Routers">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='6' y='34' width='52' height='20' rx='5' fill='%231d3557'/%3E%3Crect x='16' y='10' width='4' height='24' rx='2' fill='%231d3557'/%3E%3Crect x='44' y='10' width='4' height='24' rx='2' fill='%231d3557'/%3E%3Ccircle cx='18' cy='44' r='3' fill='%2352d273'/%3E%3Ccircle cx='28' cy='44' r='3' fill='%2352d273'/%3E%3Ccircle cx='38' cy='44' r='3' fill='%23a8dadc'/%3E%3Ccircle cx='48' cy='44' r='3' fill='%23a8dadc'/%3E%3C/svg%3E">
 <style>
   :root{
@@ -141,6 +146,7 @@ document.addEventListener('click', e => {
 });
 
 render();
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 </script>
 </body>
 </html>

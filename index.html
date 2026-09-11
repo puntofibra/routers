@@ -101,18 +101,22 @@ const API = 'https://script.google.com/macros/s/AKfycbxddkYiY4OU19Vf1SQYWVdyfJM6
 const KEY = 'routers-pendientes';
 let items = JSON.parse(localStorage.getItem(KEY) || '[]');
 
-async function api(datos){
+function api(datos){
   resumen.textContent = 'Guardando…';
-  try {
-    const r = await fetch(API, { method:'POST', body: JSON.stringify({ ...datos, token: localStorage.getItem('routers-auth') }) });
-    const d = await r.json();
-    if (d.error) throw new Error(d.error);
-    items = d.items;
-    localStorage.setItem(KEY, JSON.stringify(items));
-  } catch (e) {
-    alert('No se ha podido conectar con la hoja: ' + e.message);
-  }
-  render();
+  return new Promise(resolve => {
+    const cb = 'cb' + Date.now();
+    const sc = document.createElement('script');
+    const fin = () => { sc.remove(); delete window[cb]; render(); resolve(); };
+    window[cb] = d => {
+      if (d.error) alert('La hoja ha respondido: ' + d.error);
+      else { items = d.items; localStorage.setItem(KEY, JSON.stringify(items)); }
+      fin();
+    };
+    sc.onerror = () => { alert('No se ha podido conectar con la hoja. Comprueba que la implementación tiene acceso "Cualquier usuario".'); fin(); };
+    const q = new URLSearchParams({ ...datos, token: localStorage.getItem('routers-auth'), callback: cb });
+    sc.src = API + '?' + q;
+    document.body.appendChild(sc);
+  });
 }
 
 const fmt = ts => new Date(ts).toLocaleString('es-ES', {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'});
